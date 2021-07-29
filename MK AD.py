@@ -74,7 +74,7 @@ def main():
             new_array = array(resize(img_array, (50, 50))).reshape(-1, 50, 50, 1)
             savez_compressed(s['data'], new_array)                                      # Data To Be Send
             remove(s['img']), remove(img)                                               # , remove(s['data'])
-            return print('Data send !'), after()
+            return print('◄•►'), after()
     return print("No image found (check if the source is activated or if it's in the current scene)"), after()
 
 
