@@ -59,7 +59,7 @@ if 'src' in s.keys():
     s['src_obs'] = obs.obs_get_source_by_name(s['src'])
 
 
-# Screenshot -----------------------------------------------------------------------------------------------------------
+# Main --------------------------------------------------------------------------------------------------------------
 def main():
     if not s['state']:
         return
@@ -75,7 +75,7 @@ def main():
             new_array = array(resize(img_array, (50, 50))).reshape(-1, 50, 50, 1)
             savez_compressed(s['data'], new_array)                                      # Data To Be Send
             remove(s['img']), remove(img)                                               # , remove(s['crop-map']), remove(s['data'])
-            return print('Data send !'), after()
+            return print('◄•►'), after()
     s['ct_no_img'] += 1
     if s['ct_no_img'] == 1:
         return set_profile(open(path.expanduser('~/AppData/Roaming/obs-studio/global.ini')).read().split('ProfileDir=')[1].split('\n')[0]), after(0)
