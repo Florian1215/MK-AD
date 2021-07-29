@@ -9,7 +9,7 @@ from numpy import array, savez_compressed
 from datetime import datetime, timedelta
 from configparser import ConfigParser
 
-s = {'state': False, 'gui': False, 'dir': path.dirname(__file__)+'/bin', 'sp': ' '}
+s = {'state': False, 'gui': False, 'dir': path.dirname(__file__)+'/bin', 'sp': ' ', 'ct_no_img': 0}
 s.update({'config': s['dir']+'/config.ini', 'img': s['dir']+'/img-crop.png', 'data': s['dir']+'/data.npz', 'map': s['dir']+'/img-crop-map.png'})
 c = ConfigParser()
 c.read(s['config'])
@@ -69,23 +69,29 @@ def main():
         s['date'] = (datetime.now() - timedelta(seconds=sec)).strftime('%Y-%m-%d{sp}%H-%M-%S'.format_map(s))
         img = '{p_rec}/Screenshot{sp}{date}.png'.format_map(s)
         if path.exists(img):
+            s['ct_no_img'] = 0
             Image.open(img).crop(eval(s['crop'])).save(s['img']), Image.open(img).crop(eval(s['crop-map'])).save(s['map'])
             img_array = imread(s['img'], IMREAD_GRAYSCALE)
             new_array = array(resize(img_array, (50, 50))).reshape(-1, 50, 50, 1)
             savez_compressed(s['data'], new_array)                                      # Data To Be Send
-            remove(s['img']), remove(img)                                               # , remove(s['data'])
-            return print('◄•►'), after()
-    return print("No image found (check if the source is activated or if it's in the current scene)"), after()
+            remove(s['img']), remove(img)                                               # , remove(s['crop-map']), remove(s['data'])
+            return print('Data send !'), after()
+    s['ct_no_img'] += 1
+    if s['ct_no_img'] == 1:
+        return set_profile(open(path.expanduser('~/AppData/Roaming/obs-studio/global.ini')).read().split('ProfileDir=')[1].split('\n')[0]), after(0)
+    else:
+        return print("No image found (check if the source is activated or if it's in the current scene)"), after()
 
 
-def play():
-    if s['state']:
+def run(play=False, pause=False):
+    if (s['state'] or pause) and not play:
+        print(('Script in pause', 'Script already in pause')[pause and not s['state']])
         s['state'] = False
-        print('Script in pause')
     elif 'src' in s.keys():
+        if play and s['state']:
+            return print('Script already running')
         s['state'] = True
-        print('Script running')
-        return Thread(target=main).start()
+        return print('Script running'), Thread(target=main).start()
     else:
         raise Exception('\n\n\tPLEASE SELECT A VALID SOURCE !\n')
 
@@ -117,7 +123,6 @@ def script_properties():
             continue
         obs.obs_property_list_add_string(p, name, name)
     obs.source_list_release(srcs)
-    obs.obs_properties_add_button(props, 'play', 'Play', lambda a, b: play())
-    obs.obs_properties_add_button(props, 'pause', 'Pause', lambda a, b: play())
-
+    obs.obs_properties_add_button(props, 'play', 'Play', lambda a, b: run(True))
+    obs.obs_properties_add_button(props, 'pause', 'Pause', lambda a, b: run(pause=True))
     return props
